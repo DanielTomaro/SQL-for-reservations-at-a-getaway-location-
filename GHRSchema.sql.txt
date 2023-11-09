@@ -1,0 +1,618 @@
+--Schema Definition
+--Getaway Holidays Reservation Database System
+
+DROP TABLE Client cascade constraints;
+DROP TABLE CCondition cascade constraints;
+DROP TABLE Reservation cascade constraints;
+DROP TABLE Activity cascade constraints;
+DROP TABLE Outdoor_activity cascade constraints;
+DROP TABLE Indoor_activity cascade constraints;
+DROP TABLE Accommodation cascade constraints;
+DROP TABLE Accommodation_type cascade constraints;
+DROP TABLE Equipment cascade constraints;
+DROP TABLE Supplier cascade constraints;
+DROP TABLE Supplies cascade constraints;
+DROP TABLE Uses_equipment cascade constraints;
+DROP TABLE Client_preference cascade constraints;
+DROP TABLE Reservation_accommodation cascade constraints;
+DROP TABLE Activity_supervisor cascade constraints;
+DROP TABLE Outdoor_instructor cascade constraints;
+DROP TABLE IField cascade constraints;
+DROP TABLE Masseuse cascade constraints;
+DROP TABLE Swimming_instructor cascade constraints;
+DROP TABLE Supervision cascade constraints;
+
+--PURGE RECYCLEBIN;
+
+----- CREATE TABLE STATEMENTS -----
+
+CREATE TABLE Client(
+ClientNo    	VARCHAR2(10)  NOT NULL,
+Name 			    VARCHAR2(20),
+Sex      		  CHAR(1)   CHECK(Sex IN('M','m','F','f')),
+DOB 			    DATE,
+Address 		  VARCHAR2(50),
+Phone			    VARCHAR2(20),
+Email      		VARCHAR2(50),
+Occupation 		VARCHAR2(15),
+MaritalStatus	VARCHAR2(10) CHECK(MaritalStatus IN('Married', 'Single')),
+Spouse			  VARCHAR2(20),
+Anniversary		DATE,
+PRIMARY KEY(ClientNo));
+
+
+CREATE TABLE CCondition(
+ClientNo		  VARCHAR2(10) NOT NULL,
+Condition 		VARCHAR2(20) NOT NULL,
+PRIMARY KEY(ClientNo, Condition),
+FOREIGN KEY(ClientNo) REFERENCES Client(ClientNo));
+
+
+CREATE TABLE Reservation(
+ResNo      		VARCHAR2(10)  NOT NULL,
+ResDate   		DATE,
+NoOfGuests 		NUMBER(2),
+StartDate 		DATE,
+EndDate 		  DATE,
+ClientNo 		  VARCHAR2(10) NOT NULL,
+Status        VARCHAR2(10) CHECK(Status IN('Reserved','Cancelled', 'Ongoing', 'Completed')),
+PRIMARY KEY(ResNo),
+FOREIGN KEY(ClientNo) REFERENCES Client(ClientNo));
+
+
+CREATE TABLE Activity(
+ActivityID    	VARCHAR2(10) NOT NULL,
+ActName 			      VARCHAR2(20),
+ActDesciption 		  VARCHAR2(150),
+ActRate 			      NUMBER(5,2),
+RiskLevel 		  VARCHAR2(6) CHECK(RiskLevel IN('High', 'Medium', 'Low')),
+PRIMARY KEY(ActivityID));
+
+CREATE TABLE Outdoor_activity(
+ActivityID    	VARCHAR2(10) NOT NULL,
+PRIMARY KEY(ActivityID),
+FOREIGN KEY(ActivityID) REFERENCES Activity(ActivityID));
+
+CREATE TABLE Indoor_activity(
+ActivityID    	VARCHAR2(10) NOT NULL,
+Location        VARCHAR2(50),
+OpeningHours    VARCHAR2(30),
+PRIMARY KEY(ActivityID),
+FOREIGN KEY(ActivityID) REFERENCES Activity(ActivityID));
+
+CREATE TABLE Accommodation_type(
+AccTypeID	    	VARCHAR2(10) NOT NULL,
+AccTypeName 		VARCHAR2(20),
+AccTypeRate 		NUMBER(5,2),
+NoOfBeds 		    NUMBER(1),
+PRIMARY KEY(AccTypeID));
+
+
+CREATE TABLE Accommodation(
+RoomNo 			      VARCHAR2(3) NOT NULL,
+LevelNo 		      NUMBER(1),
+Status 			      CHAR(1) CHECK(Status IN('O','E','o','e')),
+ConnectedRoomNo	  VARCHAR2(3),
+AccTypeID 			  VARCHAR2(10),
+PRIMARY KEY(RoomNo),
+FOREIGN KEY(ConnectedRoomNo) REFERENCES Accommodation(RoomNo),
+FOREIGN KEY(AccTypeID) REFERENCES Accommodation_type(AccTypeID));
+
+
+
+CREATE TABLE Equipment(
+EquipmentID 	    VARCHAR2(10) NOT NULL,
+EquipName 			  VARCHAR2(30),
+Stock             NUMBER(4),
+NextInspection    DATE,
+PRIMARY KEY(EquipmentID));
+
+
+CREATE TABLE Supplier(
+BillerCode    	VARCHAR2(10)  NOT NULL,
+BusinessName    VARCHAR2(30),
+ContactPerson 	VARCHAR2(20),
+Phone			      VARCHAR2(20),
+PRIMARY KEY(BillerCode));
+
+
+CREATE TABLE Supplies(
+EquipmentID 	VARCHAR2(10) NOT NULL,
+BillerCode 		VARCHAR2(10) NOT NULL,
+PRIMARY KEY(EquipmentID, BillerCode),
+FOREIGN KEY(EquipmentID) REFERENCES Equipment(EquipmentID),
+FOREIGN KEY(BillerCode) REFERENCES Supplier(BillerCode));
+
+
+CREATE TABLE Uses_equipment(
+ActivityID    	VARCHAR2(10)  NOT NULL,
+EquipmentID    	VARCHAR2(10)  NOT NULL,
+PRIMARY KEY(ActivityID, EquipmentID),
+FOREIGN KEY(ActivityID) REFERENCES Outdoor_activity(ActivityID),
+FOREIGN KEY(EquipmentID) REFERENCES Equipment(EquipmentID));
+
+
+CREATE TABLE Client_preference(
+ClientNo    	  VARCHAR2(10)  NOT NULL,
+ActivityID    	VARCHAR2(10)  NOT NULL,
+PRIMARY KEY(ClientNo, ActivityID),
+FOREIGN KEY(ActivityID) REFERENCES Activity(ActivityID),
+FOREIGN KEY(ClientNo) REFERENCES Client(ClientNo));
+
+
+CREATE TABLE Reservation_accommodation(
+ResNo    		   VARCHAR2(10)  NOT NULL,
+RoomNo    		 VARCHAR2(3)  NOT NULL,
+PRIMARY KEY(ResNo, RoomNo),
+FOREIGN KEY(ResNo) REFERENCES Reservation(ResNo),
+FOREIGN KEY(RoomNo) REFERENCES Accommodation(RoomNo));
+
+
+CREATE TABLE Activity_supervisor(
+SupervisorID    VARCHAR2(10)  NOT NULL,
+PRIMARY KEY(SupervisorID));
+
+
+CREATE TABLE Outdoor_instructor(
+InstructorID    VARCHAR2(10)  NOT NULL,
+InstrName   			    VARCHAR2(20),
+InstrPhone 			    VARCHAR2(20),
+SupervisorID	  VARCHAR2(10),
+PRIMARY KEY(InstructorID),
+FOREIGN KEY(SupervisorID) REFERENCES Activity_supervisor(SupervisorID));
+
+
+CREATE TABLE IField(
+InstructorID    VARCHAR2(10)  NOT NULL,
+Field   		    VARCHAR2(20) NOT NULL,
+PRIMARY KEY(InstructorID, Field),
+FOREIGN KEY(InstructorID) REFERENCES Outdoor_instructor(InstructorID));
+
+
+CREATE TABLE Masseuse(
+MasseuseID     VARCHAR2(10)  NOT NULL,
+MassName   			   VARCHAR2(20),
+MassPhone 			   VARCHAR2(20),
+Area 			     VARCHAR2(20),
+SupervisorID	 VARCHAR2(10),
+PRIMARY KEY(MasseuseID),
+FOREIGN KEY(SupervisorID) REFERENCES Activity_supervisor(SupervisorID));
+
+
+CREATE TABLE Swimming_instructor(
+SwimmerID    	 VARCHAR2(10)  NOT NULL,
+SwimName   			   VARCHAR2(20),
+SwimPhone 			   VARCHAR2(20),
+SupervisorID	 VARCHAR2(10),
+PRIMARY KEY(SwimmerID),
+FOREIGN KEY(SupervisorID) REFERENCES Activity_supervisor(SupervisorID));
+
+
+CREATE TABLE Supervision(
+ResNo    		     VARCHAR2(10)  NOT NULL,
+ActivityID   	   VARCHAR2(10)  NOT NULL,
+SupervisorID	   VARCHAR2(10)  NOT NULL,
+Day 			       DATE  		     NOT NULL,
+PRIMARY KEY(ResNo, ActivityID, SupervisorID, Day),
+FOREIGN KEY(ActivityID) REFERENCES Activity(ActivityID),
+FOREIGN KEY(SupervisorID) REFERENCES Activity_supervisor(SupervisorID),
+FOREIGN KEY(ResNo) REFERENCES Reservation(ResNo));
+
+-----END CREATE TABLE CLIENT-----
+
+INSERT INTO Client
+VALUES
+('1', 'Robin Williams', 'M', to_date('11-11-1979','dd-mm-yyyy'), '10 Mendota Avenue, Lalor', '+61450666432', 'rwilliams0@hugedomains.com', 'Engineer', 'Married', 'Tina Williams', to_date('11-12-2005','dd-mm-yyyy'));
+
+INSERT INTO Client
+VALUES
+('2', 'Gary Parker', 'M', to_date('10-11-1981','dd-mm-yyyy'), '162 Lunder Court, Lalor', '+61450666433', 'gparker1@hugedomains.com', 'Engineer', 'Single', null , null);
+
+INSERT INTO Client
+VALUES
+('3', 'Gregory Perez', 'M', to_date('10-05-1981','dd-mm-yyyy'), '902 Washington Lane, Bundoora', '+61450555433', 'gperez3@hugedomains.com', 'Plumber', 'Single', null , null);
+
+INSERT INTO Client
+VALUES
+('4', 'Carlos Howard', 'M', to_date('05-10-1981','dd-mm-yyyy'), '34 Waratah Street, Thomastown', '+61450672446', 'ghoward@hugedomains.com', 'Engineer', 'Married', 'Rebeca Howard' , to_date('11-05-2010','dd-mm-yyyy'));
+
+INSERT INTO Client
+VALUES
+('5', 'Janice Freeman', 'F', to_date('10-09-1987','dd-mm-yyyy'), '580 South Trail, Lalor', '+61450666411', 'jfreeman@hugedomains.com', 'Doctor', 'Single', null , null);
+
+INSERT INTO Client
+VALUES
+('6', 'Diane Nichols', 'F', to_date('22-08-1981','dd-mm-yyyy'), '986 Swallow Way, Mill Park', '+61450666431', 'dnichols@hugedomains.com', 'Teacher', 'Married', 'Richard Addison', to_date('11-05-2008','dd-mm-yyyy'));
+
+INSERT INTO Client
+VALUES
+('7', 'Timothy Day', 'M', to_date('02-03-1991','dd-mm-yyyy'), '8 Mesta Street, Carlton', '+61450872445', 'tday6@hugedomains.com', 'Nurse', 'Single', null , null);
+
+INSERT INTO Client
+VALUES
+('8', 'Juan Carpenter', 'M', to_date('06-11-1989','dd-mm-yyyy'), '424 Cambridge Lane, South Morang', '+61450661111', 'jcarpenter9@hugedomains.com', 'Sales Person', 'Single', null , null);
+
+INSERT INTO Client
+VALUES
+('9', 'Susan Moore', 'F', to_date('16-01-1985','dd-mm-yyyy'), '3 Grace Street, Laverton', '+61450662222', 'smoore@hugedomains.com', 'Police Officer', 'Single', null , null);
+
+INSERT INTO Client
+VALUES
+('10', 'Richard Perry', 'M', to_date('10-04-1975','dd-mm-yyyy'), '12 Greenwood drive, Bundoora', '+61450212121', 'rperry@hugedomains.com', 'Contractor', 'Married', 'Nadia Perry', to_date('23-09-2000','dd-mm-yyyy'));
+
+INSERT INTO Client
+VALUES
+('11', 'Tony Perez', 'M', to_date('05-11-1975','dd-mm-yyyy'), '60 Dalton Rd, Thomastown', '+61450666467', 'tperez@hugedomains.com', 'Bus Driver', 'Single', null , null);
+
+INSERT INTO Client
+VALUES
+('12', 'Alex Mahone', 'M', to_date('05-07-1983','dd-mm-yyyy'), '55 Waratah Street, Thomastown', '+61450666777', 'amahone@hugedomains.com', 'Detective', 'Married', 'Suzan Mahone' , to_date('14-04-2011','dd-mm-yyyy'));
+
+INSERT INTO Client
+VALUES
+('13', 'Frank Write', 'M', to_date('05-11-1973','dd-mm-yyyy'), '17 Alexander Avenue, Thomastown', '+61450612121', 'fwrite@hugedomains.com', 'Engineer', 'Single', null , null);
+
+INSERT INTO Client
+VALUES
+('14', 'Josephine Cox', 'F', to_date('05-12-1987','dd-mm-yyyy'), '4/34 Boronia Street, Lalor', '+61450556467', 'jcox@hugedomains.com', 'Migration agent', 'Single', null , null);
+
+INSERT INTO Client
+VALUES
+('15', 'Abdullah Maruf', 'M', to_date('14-05-1985','dd-mm-yyyy'), '12 Settlement Road, Bundoora', '+61450664848', 'amaruf@hugedomains.com', 'Student', 'Single', null , null);
+
+
+
+
+-----INSERT STATEMENTS FOR CCondition-----
+
+INSERT INTO CCondition VALUES ('1', 'Blood Pressure');
+INSERT INTO CCondition VALUES ('1', 'Heart Condition');
+INSERT INTO CCondition VALUES ('8', 'Acrophobia');
+INSERT INTO CCondition VALUES ('2', 'Heart Condition');
+INSERT INTO CCondition VALUES ('2', 'AquaPhobia');
+INSERT INTO CCondition VALUES ('10', 'Photophobia');
+INSERT INTO CCondition VALUES ('11', 'Heart Condition');
+INSERT INTO CCondition VALUES ('11', 'Acrophobia');
+INSERT INTO CCondition VALUES ('15', 'AquaPhobia');
+INSERT INTO CCondition VALUES ('14', 'Heart Condition');
+
+
+-----INSERT STATEMENTS FOR Reservation-----
+
+INSERT INTO Reservation
+VALUES ('1', to_date('01-11-2015','dd-mm-yyyy'), 5, to_date('01-02-2016','dd-mm-yyyy'), to_date('05-02-2016','dd-mm-yyyy'), '1', 'Completed');
+
+INSERT INTO Reservation
+VALUES ('2', to_date('01-11-2015','dd-mm-yyyy'), 2, to_date('05-01-2016','dd-mm-yyyy'), to_date('10-01-2016','dd-mm-yyyy'), '2', 'Cancelled');
+
+INSERT INTO Reservation
+VALUES ('3', to_date('03-11-2015','dd-mm-yyyy'), 3, to_date('05-01-2016','dd-mm-yyyy'), to_date('15-01-2016','dd-mm-yyyy'), '5', 'Completed');
+
+INSERT INTO Reservation
+VALUES ('4', to_date('02-01-2016','dd-mm-yyyy'), 2, to_date('03-01-2016','dd-mm-yyyy'), to_date('06-01-2016','dd-mm-yyyy'), '3', 'Completed');
+
+INSERT INTO Reservation
+VALUES ('5', to_date('15-02-2016','dd-mm-yyyy'), 3, to_date('20-02-2016','dd-mm-yyyy'), to_date('22-02-2016','dd-mm-yyyy'), '4', 'Completed');
+
+INSERT INTO Reservation
+VALUES ('6', to_date('20-02-2016','dd-mm-yyyy'), 3, to_date('25-02-2016','dd-mm-yyyy'), to_date('28-02-2016','dd-mm-yyyy'), '6', 'Ongoing');
+
+INSERT INTO Reservation
+VALUES ('7', to_date('20-02-2016','dd-mm-yyyy'), 5, to_date('22-02-2016','dd-mm-yyyy'), to_date('25-02-2016','dd-mm-yyyy'), '7', 'Ongoing');
+
+INSERT INTO Reservation
+VALUES ('8', to_date('24-02-2016','dd-mm-yyyy'), 2, to_date('28-02-2016','dd-mm-yyyy'), to_date('03-03-2016','dd-mm-yyyy'), '8', 'Reserved');
+
+INSERT INTO Reservation
+VALUES ('9', to_date('28-02-2016','dd-mm-yyyy'), 10, to_date('10-03-2016','dd-mm-yyyy'), to_date('15-03-2016','dd-mm-yyyy'), '10', 'Reserved');
+
+INSERT INTO Reservation
+VALUES ('10', to_date('01-03-2016','dd-mm-yyyy'), 7, to_date('15-03-2016','dd-mm-yyyy'), to_date('20-03-2016','dd-mm-yyyy'), '1', 'Reserved');
+
+INSERT INTO Reservation
+VALUES ('11', to_date('01-03-2016','dd-mm-yyyy'), 1, to_date('15-03-2016','dd-mm-yyyy'), to_date('20-03-2016','dd-mm-yyyy'), '11', 'Reserved');
+
+INSERT INTO Reservation
+VALUES ('12', to_date('01-04-2016','dd-mm-yyyy'), 2, to_date('15-04-2016','dd-mm-yyyy'), to_date('15-04-2016','dd-mm-yyyy'), '1', 'Reserved');
+
+INSERT INTO Reservation
+VALUES ('13', to_date('10-05-2016','dd-mm-yyyy'), 2, to_date('15-05-2016','dd-mm-yyyy'), to_date('20-05-2016','dd-mm-yyyy'), '12', 'Reserved');
+
+INSERT INTO Reservation
+VALUES ('14', to_date('10-05-2016','dd-mm-yyyy'), 3, to_date('17-05-2016','dd-mm-yyyy'), to_date('21-05-2016','dd-mm-yyyy'), '13', 'Reserved');
+
+INSERT INTO Reservation
+VALUES ('15', to_date('11-05-2016','dd-mm-yyyy'), 5, to_date('20-05-2016','dd-mm-yyyy'), to_date('22-05-2016','dd-mm-yyyy'), '1', 'Reserved');
+
+INSERT INTO Reservation
+VALUES ('16', to_date('15-05-2016','dd-mm-yyyy'), 2, to_date('25-05-2016','dd-mm-yyyy'), to_date('27-05-2016','dd-mm-yyyy'), '14', 'Reserved');
+
+INSERT INTO Reservation
+VALUES ('17', to_date('15-06-2016','dd-mm-yyyy'), 3, to_date('25-06-2016','dd-mm-yyyy'), to_date('27-06-2016','dd-mm-yyyy'), '4', 'Reserved');
+
+INSERT INTO Reservation
+VALUES ('18', to_date('16-07-2016','dd-mm-yyyy'), 2, to_date('25-08-2016','dd-mm-yyyy'), to_date('29-08-2016','dd-mm-yyyy'), '6', 'Reserved');
+
+INSERT INTO Reservation
+VALUES ('19', to_date('16-07-2016','dd-mm-yyyy'), 4, to_date('21-07-2016','dd-mm-yyyy'), to_date('24-07-2016','dd-mm-yyyy'), '15', 'Reserved');
+
+INSERT INTO Reservation
+VALUES ('20', to_date('26-07-2016','dd-mm-yyyy'), 2, to_date('01-08-2016','dd-mm-yyyy'), to_date('06-08-2016','dd-mm-yyyy'), '1', 'Reserved');
+
+
+-----INSERT STATEMENTS FOR Activity-----
+
+INSERT INTO Activity
+VALUES ('1', 'Hot Air Balloon Ride', 'Take a ride above the horizon to discover the scenic beauty from a unique angle nothing else can provide', 200.00, 'Medium');
+
+INSERT INTO Activity
+VALUES ('2', 'Mountaineering', 'Take the challenge to overcome a mountain and stand at the top to get the ultimate adventure', 300.00, 'High');
+
+INSERT INTO Activity
+VALUES ('3', 'Bungee Jumping', 'Face the fear and let go', 100.00, 'High');
+
+INSERT INTO Activity
+VALUES ('4', 'Rafting', 'Head towards the strong tide and beat the pressure to get a feeling of refreshing achievement', 350.00, 'Medium');
+
+INSERT INTO Activity
+VALUES ('5', 'Fishing', 'If you like the challenge of mind game and patience, this is the perfect sport for you', 50.00, 'Low');
+
+INSERT INTO Activity
+VALUES ('6', 'Swimming', 'Exercise in style in our heated swimming pool with a range of diving boards and different water depths', 25.00, 'Medium');
+
+INSERT INTO Activity
+VALUES ('7', 'Sauna', 'Refresh yourself for an hour of the traditional Finnish bath', 50.00, 'Low');
+
+INSERT INTO Activity
+VALUES ('8', 'Spa', 'Take the advantage of a world class experience of pampering and relaxation', 100.00, 'Low');
+
+
+-----INSERT STATEMENTS FOR Outdoor_activity-----
+
+INSERT INTO Outdoor_activity VALUES ('1');
+INSERT INTO Outdoor_activity VALUES ('2');
+INSERT INTO Outdoor_activity VALUES ('3');
+INSERT INTO Outdoor_activity VALUES ('4');
+INSERT INTO Outdoor_activity VALUES ('5');
+
+-----INSERT STATEMENTS FOR Indoor_activity-----
+
+INSERT INTO Indoor_activity VALUES ('6', 'Level 1, Indoor swimming pool', '07:00 A.M - Midnight');
+INSERT INTO Indoor_activity VALUES ('7', 'Level 2 terrace, Sauna room', '09:00 A.M - Midnight');
+INSERT INTO Indoor_activity VALUES ('8', 'Level 2 terrace, Spa parlor', '08:00 A.M - 10:00 P.M');
+
+-----INSERT STATEMENTS FOR Accommodation_type-----
+INSERT INTO Accommodation_type VALUES ('1', 'Deluxe Cottage', 120.00, 4);
+INSERT INTO Accommodation_type VALUES ('2', 'Honeymoon Cottage', 100.00, 1);
+INSERT INTO Accommodation_type VALUES ('3', 'Deluxe Double', 75.00, 2);
+INSERT INTO Accommodation_type VALUES ('4', 'Deluxe Single', 55.00, 1);
+
+
+-----INSERT STATEMENTS FOR Accommodation-----
+INSERT INTO Accommodation VALUES ('101', 1, 'e', null, 4);
+INSERT INTO Accommodation VALUES ('102', 1, 'e', null, 4);
+INSERT INTO Accommodation VALUES ('103', 1, 'e', null, 4);
+INSERT INTO Accommodation VALUES ('104', 1, 'e', null, 4);
+INSERT INTO Accommodation VALUES ('105', 1, 'e', null, 4);
+INSERT INTO Accommodation VALUES ('106', 1, 'e', null, 4);
+INSERT INTO Accommodation VALUES ('107', 1, 'e', null, 4);
+INSERT INTO Accommodation VALUES ('108', 1, 'e', null, 4);
+INSERT INTO Accommodation VALUES ('109', 1, 'e', null, 4);
+INSERT INTO Accommodation VALUES ('110', 1, 'e', '109', 4);
+UPDATE Accommodation SET ConnectedRoomNo = '110' WHERE RoomNo = '109';
+INSERT INTO Accommodation VALUES ('201', 2, 'e', null, 3);
+INSERT INTO Accommodation VALUES ('202', 2, 'e', null, 3);
+INSERT INTO Accommodation VALUES ('203', 2, 'e', null, 3);
+INSERT INTO Accommodation VALUES ('204', 2, 'e', null, 3);
+INSERT INTO Accommodation VALUES ('205', 2, 'e', null, 3);
+INSERT INTO Accommodation VALUES ('206', 2, 'e', '205', 3);
+UPDATE Accommodation SET ConnectedRoomNo = '206' WHERE RoomNo = '205';
+INSERT INTO Accommodation VALUES ('301', 3, 'e', null, 2);
+INSERT INTO Accommodation VALUES ('302', 3, 'e', null, 2);
+INSERT INTO Accommodation VALUES ('303', 3, 'e', null, 2);
+INSERT INTO Accommodation VALUES ('304', 3, 'o', null, 1);
+INSERT INTO Accommodation VALUES ('305', 3, 'e', null, 1);
+INSERT INTO Accommodation VALUES ('306', 3, 'o', null, 1);
+
+
+-----INSERT STATEMENTS FOR Equipment-----
+INSERT INTO Equipment VALUES ('1', 'Rafting Boat', 10 ,to_date('01-06-2016','dd-mm-yyyy'));
+INSERT INTO Equipment VALUES ('2', 'Life Jacket', 100 ,to_date('02-06-2016','dd-mm-yyyy'));
+INSERT INTO Equipment VALUES ('3', 'Bunjee Rope', 08 ,to_date('03-06-2016','dd-mm-yyyy'));
+INSERT INTO Equipment VALUES ('4', 'Bunjee Helmet', 08 ,to_date('03-06-2016','dd-mm-yyyy'));
+INSERT INTO Equipment VALUES ('5', 'Fishing Wheel', 15 ,to_date('04-06-2016','dd-mm-yyyy'));
+INSERT INTO Equipment VALUES ('6', 'Air balloon', 2 ,to_date('05-06-2016','dd-mm-yyyy'));
+INSERT INTO Equipment VALUES ('7', 'Mounteneering gear set', 20 ,to_date('06-06-2016','dd-mm-yyyy'));
+INSERT INTO Equipment VALUES ('8', 'Rafting Helmet', 50 ,to_date('07-06-2016','dd-mm-yyyy'));
+INSERT INTO Equipment VALUES ('9', 'Mounteneering Rope', 20 ,to_date('08-06-2016','dd-mm-yyyy'));
+INSERT INTO Equipment VALUES ('10', 'Rafting Log', 100 ,to_date('09-06-2016','dd-mm-yyyy'));
+INSERT INTO Equipment VALUES ('11', 'Bunjee Goggles', 10 ,to_date('03-06-2016','dd-mm-yyyy'));
+
+
+-----INSERT STATEMENTS FOR Supplier-----
+INSERT INTO Supplier VALUES ('1', 'David and Sons', 'David Bonjiorno', '+61451234567');
+INSERT INTO Supplier VALUES ('2', 'All About Rafting ', 'Allen Moss', '+61451234789');
+INSERT INTO Supplier VALUES ('3', 'FlynSky', 'Adam Patty', '+61450000123');
+INSERT INTO Supplier VALUES ('4', 'Gears', 'Jake Smith', '+61451234111');
+INSERT INTO Supplier VALUES ('5', 'Deep Water Fishing Gears', 'Richard Castle', '+61451223341');
+
+-----INSERT STATEMENTS FOR Supplies-----
+INSERT INTO Supplies VALUES ('1', '2');
+INSERT INTO Supplies VALUES ('2', '2');
+INSERT INTO Supplies VALUES ('3', '4');
+INSERT INTO Supplies VALUES ('4', '4');
+INSERT INTO Supplies VALUES ('5', '5');
+INSERT INTO Supplies VALUES ('6', '3');
+INSERT INTO Supplies VALUES ('7', '1');
+INSERT INTO Supplies VALUES ('8', '2');
+INSERT INTO Supplies VALUES ('9', '4');
+INSERT INTO Supplies VALUES ('10', '2');
+
+-----INSERT STATEMENTS FOR Uses_equipment-----
+INSERT INTO Uses_equipment VALUES ('1', '6');
+INSERT INTO Uses_equipment VALUES ('2', '7');
+INSERT INTO Uses_equipment VALUES ('2', '9');
+INSERT INTO Uses_equipment VALUES ('3', '3');
+INSERT INTO Uses_equipment VALUES ('3', '4');
+INSERT INTO Uses_equipment VALUES ('3', '11');
+INSERT INTO Uses_equipment VALUES ('4', '1');
+INSERT INTO Uses_equipment VALUES ('4', '2');
+INSERT INTO Uses_equipment VALUES ('4', '8');
+INSERT INTO Uses_equipment VALUES ('4', '10');
+INSERT INTO Uses_equipment VALUES ('5', '5');
+
+
+-----INSERT STATEMENTS FOR Client_preference-----
+INSERT INTO Client_preference VALUES ('1', '1');
+INSERT INTO Client_preference VALUES ('1', '2');
+INSERT INTO Client_preference VALUES ('2', '3');
+INSERT INTO Client_preference VALUES ('2', '7');
+INSERT INTO Client_preference VALUES ('3', '1');
+INSERT INTO Client_preference VALUES ('4', '4');
+INSERT INTO Client_preference VALUES ('4', '8');
+INSERT INTO Client_preference VALUES ('6', '7');
+INSERT INTO Client_preference VALUES ('10', '6');
+INSERT INTO Client_preference VALUES ('10', '1');
+INSERT INTO Client_preference VALUES ('10', '8');
+INSERT INTO Client_preference VALUES ('9', '2');
+INSERT INTO Client_preference VALUES ('9', '3');
+INSERT INTO Client_preference VALUES ('11', '7');
+INSERT INTO Client_preference VALUES ('11', '8');
+INSERT INTO Client_preference VALUES ('11', '6');
+INSERT INTO Client_preference VALUES ('13', '4');
+INSERT INTO Client_preference VALUES ('13', '5');
+INSERT INTO Client_preference VALUES ('13', '7');
+INSERT INTO Client_preference VALUES ('13', '6');
+INSERT INTO Client_preference VALUES ('14', '5');
+INSERT INTO Client_preference VALUES ('15', '3');
+INSERT INTO Client_preference VALUES ('15', '1');
+INSERT INTO Client_preference VALUES ('15', '8');
+
+
+
+-----INSERT STATEMENTS FOR Reservation_accommodation-----
+INSERT INTO Reservation_accommodation VALUES ('1', '205');
+INSERT INTO Reservation_accommodation VALUES ('1', '206');
+INSERT INTO Reservation_accommodation VALUES ('2', '303');
+INSERT INTO Reservation_accommodation VALUES ('3', '305');
+INSERT INTO Reservation_accommodation VALUES ('4', '301');
+INSERT INTO Reservation_accommodation VALUES ('5', '101');
+INSERT INTO Reservation_accommodation VALUES ('5', '203');
+INSERT INTO Reservation_accommodation VALUES ('6', '306');
+INSERT INTO Reservation_accommodation VALUES ('7', '304');
+INSERT INTO Reservation_accommodation VALUES ('8', '302');
+INSERT INTO Reservation_accommodation VALUES ('9', '304');
+INSERT INTO Reservation_accommodation VALUES ('9', '305');
+INSERT INTO Reservation_accommodation VALUES ('9', '306');
+INSERT INTO Reservation_accommodation VALUES ('10', '304');
+INSERT INTO Reservation_accommodation VALUES ('10', '305');
+INSERT INTO Reservation_accommodation VALUES ('11', '102');
+INSERT INTO Reservation_accommodation VALUES ('13', '205');
+INSERT INTO Reservation_accommodation VALUES ('14', '101');
+INSERT INTO Reservation_accommodation VALUES ('14', '201');
+INSERT INTO Reservation_accommodation VALUES ('15', '304');
+INSERT INTO Reservation_accommodation VALUES ('16', '203');
+INSERT INTO Reservation_accommodation VALUES ('17', '104');
+INSERT INTO Reservation_accommodation VALUES ('17', '204');
+INSERT INTO Reservation_accommodation VALUES ('18', '201');
+INSERT INTO Reservation_accommodation VALUES ('19', '201');
+INSERT INTO Reservation_accommodation VALUES ('19', '202');
+INSERT INTO Reservation_accommodation VALUES ('20', '202');
+
+
+
+-----INSERT STATEMENTS FOR Activity_supervisor-----
+INSERT INTO Activity_supervisor VALUES ('1');
+INSERT INTO Activity_supervisor VALUES ('2');
+INSERT INTO Activity_supervisor VALUES ('3');
+INSERT INTO Activity_supervisor VALUES ('4');
+INSERT INTO Activity_supervisor VALUES ('5');
+INSERT INTO Activity_supervisor VALUES ('6');
+INSERT INTO Activity_supervisor VALUES ('7');
+INSERT INTO Activity_supervisor VALUES ('8');
+INSERT INTO Activity_supervisor VALUES ('9');
+INSERT INTO Activity_supervisor VALUES ('10');
+INSERT INTO Activity_supervisor VALUES ('11');
+INSERT INTO Activity_supervisor VALUES ('12');
+INSERT INTO Activity_supervisor VALUES ('13');
+INSERT INTO Activity_supervisor VALUES ('14');
+INSERT INTO Activity_supervisor VALUES ('15');
+INSERT INTO Activity_supervisor VALUES ('16');
+
+
+-----INSERT STATEMENTS FOR Outdoor_instructor-----
+INSERT INTO Outdoor_instructor VALUES ('1', 'Aaron Spencer', '+61450652337', '1');
+INSERT INTO Outdoor_instructor VALUES ('2', 'Jony Abbott', '+61450652227', '2');
+INSERT INTO Outdoor_instructor VALUES ('3', 'Adam Addison', '+61450156337', '3');
+INSERT INTO Outdoor_instructor VALUES ('4', 'Albert Whitecker', '+61450652777', '4');
+INSERT INTO Outdoor_instructor VALUES ('5', 'Ray Hanley', '+61450656577', '5');
+INSERT INTO Outdoor_instructor VALUES ('6', 'Jack Dowson', '+61450692347', null);
+INSERT INTO Outdoor_instructor VALUES ('7', 'Ray Write', '+61450692111', '11');
+INSERT INTO Outdoor_instructor VALUES ('8', 'Anthony De Silva', '+61450692222', '12');
+INSERT INTO Outdoor_instructor VALUES ('9', 'Ehsan Bell', '+61450692564', '13');
+INSERT INTO Outdoor_instructor VALUES ('10', 'Fransis Barnard', '+61450692000', '14');
+
+
+-----INSERT STATEMENTS FOR IField-----
+INSERT INTO IField VALUES ('1', 'Air Balloon Flying');
+INSERT INTO IField VALUES ('2', 'Rafting');
+INSERT INTO IField VALUES ('2', 'Fishing');
+INSERT INTO IField VALUES ('3', 'Mountaineering');
+INSERT INTO IField VALUES ('3', 'Bunjee Jumping');
+INSERT INTO IField VALUES ('4', 'Fishing');
+INSERT INTO IField VALUES ('7', 'Rafting');
+INSERT INTO IField VALUES ('8', 'Mountaineering');
+INSERT INTO IField VALUES ('9', 'Air Balloon Flying');
+INSERT INTO IField VALUES ('10', 'Bungee Jumping');
+INSERT INTO IField VALUES ('10', 'Mouintaineering');
+
+
+-----INSERT STATEMENTS FOR Masseuse-----
+INSERT INTO Masseuse VALUES ('1', 'Abby Galler', '+61450321337', 'Thai massage','6');
+INSERT INTO Masseuse VALUES ('2', 'Takisha Green', '+61450304056', 'Spa treatment','7');
+INSERT INTO Masseuse VALUES ('3', 'Zahra Sheikh', '+61450119056', 'Spa treatment', '8');
+INSERT INTO Masseuse VALUES ('4', 'Habib Zahid', '+61450100056', 'Spa treatment', '15');
+INSERT INTO Masseuse VALUES ('5', 'Tanira Musa', '+61452219056', 'Thai massage', '16');
+INSERT INTO Masseuse VALUES ('6', 'John Nash', '+61450143436', 'Shaitsu', null);
+
+
+-----INSERT STATEMENTS FOR Swimming_instructor-----
+INSERT INTO Swimming_instructor VALUES ('1', 'Oliver Austin', '+61450321337', '9');
+INSERT INTO Swimming_instructor VALUES ('2', 'Joseph Tribiani', '+61450555745', '10');
+INSERT INTO Swimming_instructor VALUES ('3', 'Rachel Cox', '+61450818482', null);
+
+
+-----INSERT STATEMENTS FOR Supervision-----
+---ResNo, ActivityID, SupervisorID, Day, Time
+INSERT INTO Supervision VALUES ('1', '1', '1', to_date('02-02-2016 09:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('1', '2', '3', to_date('03-02-2016 11:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('2', '3', '3', to_date('06-01-2016 10:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('2', '7', '7', to_date('08-01-2016 10:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('4', '1', '1', to_date('04-01-2016 10:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('5', '4', '2', to_date('20-02-2016 09:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('5', '8', '8', to_date('21-02-2016 10:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('6', '7', '8', to_date('26-02-2016 10:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('9', '1', '1', to_date('10-03-2016 11:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('9', '6', '9', to_date('12-03-2016 10:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('9', '8', '8', to_date('13-03-2016 10:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('9', '8', '7', to_date('14-03-2016 10:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('10', '1', '1', to_date('15-03-2016 10:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('10', '2', '3', to_date('19-03-2016 09:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('12', '1', '13', to_date('15-04-2016 09:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('14', '4', '11', to_date('17-05-2016 11:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('14', '5', '4', to_date('18-05-2016 12:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('14', '6', '10', to_date('19-05-2016 15:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('14', '7', '15', to_date('20-05-2016 10:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('16', '5', '2', to_date('26-05-2016 09:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('17', '4', '11', to_date('26-06-2016 12:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('17', '8', '16', to_date('27-06-2016 13:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('18', '7', '15', to_date('26-08-2016 10:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('19', '1', '13', to_date('21-07-2016 09:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('19', '3', '14', to_date('22-07-2016 09:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('19', '8', '6', to_date('19-03-2016 15:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('20', '1', '1', to_date('01-08-2016 09:00','dd-mm-yyyy HH24:MI'));
+INSERT INTO Supervision VALUES ('20', '2', '12', to_date('03-08-2016 14:00','dd-mm-yyyy HH24:MI'));
+
+
+-----END INSERT STATEMENTS-----
+COMMIT;
